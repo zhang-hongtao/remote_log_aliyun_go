@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 
@@ -123,10 +122,6 @@ func (l *Logger) Init() error {
 	return nil
 }
 
-// func (l *Logger) Start() {
-
-// }
-
 /**
  * @description:保存log
  * @param {string} content
@@ -150,17 +145,12 @@ func (l *Logger) SavaLog(content string, level string) {
 	}
 	err1 := producerInstance.SendLogWithCallBack(projectName, logStoreName, ip.String(), projectName, log, &Callback{})
 	if err1 != nil {
-		fmt.Println("err")
+		formatConsoleErr(content, level, err1.Error())
 	}
-	fmt.Println("PutLogs success")
-	// if _, ok := <-ch; ok {
-	// 	fmt.Println("Get the shutdown signal and start to shut down")
-	// 	// producerInstance.SafeClose()
-	// }
 }
 
-func (l *Logger) Debug(message string) {
-	l.SavaLog(message, "Debug")
+func (l *Logger) Debug(a ...interface{}) {
+	fmt.Println(a...)
 }
 
 func (l *Logger) Info(message string) {
@@ -203,7 +193,7 @@ func (callback *Callback) Fail(result *producer.Result) {
 }
 
 /**
- * @description: 日志格式化
+ * @description: 日志格式化 日志发送失败
  * @param {*logger.LogInfo} log
  * @return {*}
  */
@@ -216,8 +206,25 @@ func formatConsole(result *producer.Result) string {
 	s.WriteString(" RequestId:")
 	s.WriteString(result.GetRequestId()) // 获得最后一次发送失败请求Id
 	s.WriteString(" TimeStampMs:")
-	s.WriteString(strconv.FormatInt(result.GetTimeStampMs(), 10)) // 获得最后一次发送失败请求时间
+	s.WriteString(fmt.Sprint(result.GetTimeStampMs())) // 获得最后一次发送失败请求时间
 	s.WriteString(" ReservedAttempts:")
-	s.WriteString(fmt.Sprintln(result.GetReservedAttempts())) // 获得producerBatch 每次尝试被发送的信息
+	s.WriteString(fmt.Sprint(result.GetReservedAttempts())) // 获得producerBatch 每次尝试被发送的信息
+	return s.String()
+}
+
+/**
+ * @description: 日志服务 报错的日志
+ * @param {*logger.LogInfo} log
+ * @return {*}
+ */
+func formatConsoleErr(content, level, errMsg string) string {
+	var s strings.Builder
+	s.WriteString(fmt.Sprint(time.Now().Unix())) // 报错时间
+	s.WriteString(" content:")
+	s.WriteString(content) // 日志内容
+	s.WriteString(" level:")
+	s.WriteString(level) //日志级别
+	s.WriteString(" err:")
+	s.WriteString(errMsg) // 日志错误信息
 	return s.String()
 }
