@@ -69,5 +69,7 @@ func main() {
 
 5、程序在退出时需主动调用 `logger.Close()` 退出程序
 
-6、阿里云文档 https://help.aliyun.com/document_detail/286951.html
+6、使用该项目时需主动在日志服务控制台创建项目和日志名称
+
+7、阿里云文档 https://help.aliyun.com/document_detail/286951.html
 

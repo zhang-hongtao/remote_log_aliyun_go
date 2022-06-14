@@ -14,7 +14,7 @@ import (
  * 测试
  */
 func main() {
-	log := remote_log_aliyun_go.NewLogger("winner-test-project")
+	log := remote_log_aliyun_go.NewLogger("项目名称", "日志名称")
 	err := log.Init()
 	if err != nil {
 		fmt.Print("初始化错误:", err.Error())

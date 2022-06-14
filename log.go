@@ -17,7 +17,7 @@ import (
  * @Date: 2022-06-07 09:18:11
  * @LastEditTime: 2022-06-08 10:57:27
  * @LastEditors: zhanghongtaodeMacBook-Pro.local
- * @Description: 使用阿里元日志SDK log 日志存储
+ * @Description: 使用阿里云日志SDK log 日志存储
  * @FilePath: /winnerLog/log/Log.go
  */
 var (
@@ -27,16 +27,24 @@ var (
 	logStoreName     string
 	accessKeyId      string
 	accessKeySecret  string
-	securityToken    string
+	// securityToken    string
 )
 
 type Logger struct {
 	projectName string
 }
 
-func NewLogger(appName string) *Logger {
+/**
+ * @description: 实例化对象
+ * @param {string} appName 应用名称
+ * @return 返回Logger对象
+ */
+func NewLogger(appName, logName string) *Logger {
 	if appName == "" {
 		panic(errors.New("appname cannot be empty"))
+	}
+	if logName == "" {
+		panic(errors.New("logName cannot be empty"))
 	}
 	goPath := os.Getenv("GO_APP_LOG_PATH")
 	if goPath != "" {
@@ -62,10 +70,11 @@ func NewLogger(appName string) *Logger {
 		panic(errors.New("invalid env GO_ALIYUAN_ACCESSKEYSECRET"))
 	}
 	// RAM用户角色的临时安全令牌。此处取值为空，表示不使用临时安全令牌。更多信息，请参见授权用户角色。
-	securityToken = ""
+	// securityToken = ""
 	// 创建LogStore。
-	logStoreName = "remote_logs_" + appName
+	// logStoreName = "remote_logs_" + appName
 	projectName = appName
+	logStoreName = logName
 	return &Logger{
 		projectName: appName,
 	}
@@ -75,44 +84,6 @@ func NewLogger(appName string) *Logger {
  * @description: 初始化log 实例
  */
 func (l *Logger) Init() error {
-	// 创建日志服务Client。
-	client := sls.CreateNormalInterface(endpoint, accessKeyId, accessKeySecret, securityToken)
-	err := client.CreateLogStore(projectName, logStoreName, 3, 2, true, 6)
-	if err != nil {
-		if e, ok := err.(*sls.Error); ok && e.Code != "LogStoreAlreadyExist" {
-			return errors.New(projectName + " Create LogStore failed")
-		}
-	}
-
-	// 为Logstore创建索引。
-	index := sls.Index{
-		// 字段索引。
-		Keys: map[string]sls.IndexKey{
-			"message": {
-				Token:         []string{" "},
-				CaseSensitive: false,
-				Type:          "text",
-			},
-			"level": {
-				Token:         []string{",", ":", " "},
-				CaseSensitive: false,
-				Type:          "text",
-			},
-		},
-		// 全文索引。
-		Line: &sls.IndexLine{
-			Token:         []string{",", ":", " "},
-			CaseSensitive: false,
-			IncludeKeys:   []string{},
-			ExcludeKeys:   []string{},
-		},
-	}
-	err = client.CreateIndex(projectName, logStoreName, index)
-	if err != nil {
-		if e, ok := err.(*sls.Error); ok && e.Code != "IndexAlreadyExist" {
-			return errors.New(projectName + " Index : already failed")
-		}
-	}
 	producerConfig := producer.GetDefaultProducerConfig()
 	producerConfig.Endpoint = endpoint
 	producerConfig.AccessKeyID = accessKeyId
