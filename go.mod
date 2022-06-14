@@ -1,4 +1,4 @@
-module remote_log_aliyun_go
+module github.com/zhang-hongtao/remote_log_aliyun_go
 
 go 1.17
 
