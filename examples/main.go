@@ -5,35 +5,33 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"remote_log_aliyun_go"
 	"syscall"
 	"time"
+
+	"github.com/zhang-hongtao/remote_log_aliyun_go"
 )
 
 /**
  * 测试
  */
 func main() {
-	log := remote_log_aliyun_go.NewLogger("项目名称", "日志名称")
-	err := log.Init()
-	if err != nil {
-		fmt.Print("初始化错误:", err.Error())
-	}
+	log := remote_log_aliyun_go.NewLogger("winner-test-project", "winner", "test_one_2")
+	log.Init()
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, syscall.SIGKILL, syscall.SIGINT)
 	go func() {
 		time.Sleep(5 * time.Second)
 		GracefullExit(ch)
 	}()
-	log.Error(errors.New("错误日志6"))
-	log.Info("测试6")
+	log.Error(errors.New("错误日志11"))
+	log.Info("测试Info11")
 	for {
 		s := <-ch
 		switch s {
 		case syscall.SIGINT:
 			//SIGINT 信号，在程序关闭时会收到这个信号
 			fmt.Println("SIGINT", "退出程序，执行退出前逻辑")
-			log.Access("测试Access6")
+			log.Access("测试Access11")
 			log.Close()
 			// time.Sleep(5 * time.Second)
 			fmt.Println("system end")

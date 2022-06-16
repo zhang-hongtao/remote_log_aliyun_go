@@ -30,11 +30,8 @@ import (
 )
 
 func main() {
-	logger := remote_log_aliyun_go.NewLogger("项目名称")
-	err := logger.Init()
-	if err != nil {
-		fmt.Print("初始化错误:", err.Error())
-	}
+	logger := remote_log_aliyun_go.NewLogger("项目名称","app名称","log文件名")
+	logger.Init()
     logger.Logger.Info("记录info日志") // http上传日志
 	logger.Logger.Warn("记录warn日志") // http上传日志
 
