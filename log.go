@@ -20,18 +20,13 @@ import (
  * @Description: 使用阿里云日志SDK log 日志存储
  * @FilePath: /winnerLog/log/Log.go
  */
-var (
-	producerInstance *producer.Producer
-	logger           *Logger
-)
 
 type Logger struct {
-	appName         string
-	endpoint        string
-	projectName     string
-	logStoreName    string
-	accessKeyId     string
-	accessKeySecret string
+	ip               string
+	appName          string
+	projectName      string
+	logStoreName     string
+	producerInstance *producer.Producer
 }
 
 /**
@@ -53,7 +48,8 @@ func NewLogger(projectName, appName, logName string) *Logger {
 	}
 	goPath := os.Getenv("GO_APP_LOG_PATH")
 	if goPath != "" {
-		ErrorLogPath = fmt.Sprintf("%v/%v/remote_logs", goPath, appName)
+		ErrorLogPath = fmt.Sprintf("%v/%v/%v/remote_logs", goPath, projectName, appName)
+
 		os.MkdirAll(ErrorLogPath, os.ModePerm)
 	} else {
 		panic(errors.New("invalid env GO_APP_LOG_PATH"))
@@ -77,28 +73,19 @@ func NewLogger(projectName, appName, logName string) *Logger {
 	// RAM用户角色的临时安全令牌。此处取值为空，表示不使用临时安全令牌。更多信息，请参见授权用户角色。
 	// securityToken = ""
 	// 创建LogStore。
-	// logStoreName = "remote_logs_" + appName
-	logger = &Logger{
-		projectName:     projectName,
-		appName:         appName,
-		logStoreName:    logName,
-		endpoint:        endpoint,
-		accessKeyId:     accessKeyId,
-		accessKeySecret: accessKeySecret,
+	logger := &Logger{
+		projectName:  projectName,
+		appName:      appName,
+		logStoreName: logName,
 	}
-	return logger
-}
-
-/**
- * @description: 初始化log 实例
- */
-func (l *Logger) Init() {
+	logger.getIp()
 	producerConfig := producer.GetDefaultProducerConfig()
-	producerConfig.Endpoint = logger.endpoint
-	producerConfig.AccessKeyID = logger.accessKeyId
-	producerConfig.AccessKeySecret = logger.accessKeySecret
-	producerInstance = producer.InitProducer(producerConfig)
-	producerInstance.Start() // 启动producer实例
+	producerConfig.Endpoint = endpoint
+	producerConfig.AccessKeyID = accessKeyId
+	producerConfig.AccessKeySecret = accessKeySecret
+	logger.producerInstance = producer.InitProducer(producerConfig)
+	logger.producerInstance.Start() // 启动producer实例
+	return logger
 }
 
 /**
@@ -106,7 +93,7 @@ func (l *Logger) Init() {
  * @param {string} content
  * @param {string} level
  */
-func (l *Logger) SavaLog(content string, level string) {
+func (l *Logger) savaLog(content string, level string) {
 	log := &sls.Log{
 		Time: proto.Uint32(uint32(time.Now().Unix())),
 		Contents: []*sls.LogContent{{
@@ -117,11 +104,10 @@ func (l *Logger) SavaLog(content string, level string) {
 			Value: proto.String(level),
 		}},
 	}
-	ip, err := externalIP()
-	if err != nil {
-		fmt.Println(err)
+	if len(l.ip) == 0 {
+		l.getIp()
 	}
-	err1 := producerInstance.SendLogWithCallBack(logger.projectName, logger.logStoreName, logger.appName, ip.String(), log, &Callback{})
+	err1 := l.producerInstance.SendLogWithCallBack(l.projectName, l.logStoreName, l.appName, l.ip, log, &Callback{Content: level + "," + content})
 	if err1 != nil {
 		formatConsoleErr(content, level, err1.Error())
 	}
@@ -132,29 +118,30 @@ func (l *Logger) Debug(a ...interface{}) {
 }
 
 func (l *Logger) Info(message string) {
-	l.SavaLog(message, "Info")
+	l.savaLog(message, "Info")
 }
 
 func (l *Logger) Warn(message string) {
-	l.SavaLog(message, "Warn")
+	l.savaLog(message, "Warn")
 }
 
 func (l *Logger) Error(message error) {
-	l.SavaLog(message.Error(), "Error")
+	l.savaLog(message.Error(), "Error")
 }
 
 func (l *Logger) Access(message string) {
-	l.SavaLog(message, "Access")
+	l.savaLog(message, "Access")
 }
 
 func (l *Logger) Close() {
-	producerInstance.SafeClose()
+	l.producerInstance.SafeClose()
 }
 
 /**
  * 发送日志的回调
  */
 type Callback struct {
+	Content string
 }
 
 func (callback *Callback) Success(result *producer.Result) {
@@ -166,7 +153,15 @@ func (callback *Callback) Success(result *producer.Result) {
 
 func (callback *Callback) Fail(result *producer.Result) {
 	if !result.IsSuccessful() {
-		FailUploadLog(formatConsole(result))
+		FailUploadLog(formatConsole(callback.Content, result))
+	}
+}
+
+func (l *Logger) getIp() {
+	IP, err := externalIP()
+	l.ip = IP.String()
+	if err != nil {
+		fmt.Println(err)
 	}
 }
 
@@ -175,7 +170,7 @@ func (callback *Callback) Fail(result *producer.Result) {
  * @param {*logger.LogInfo} log
  * @return {*}
  */
-func formatConsole(result *producer.Result) string {
+func formatConsole(content string, result *producer.Result) string {
 	var s strings.Builder
 	s.WriteString("ErrCode:")
 	s.WriteString(result.GetErrorCode()) // 获得最后一次发送失败错误码
@@ -187,6 +182,8 @@ func formatConsole(result *producer.Result) string {
 	s.WriteString(fmt.Sprint(result.GetTimeStampMs())) // 获得最后一次发送失败请求时间
 	s.WriteString(" ReservedAttempts:")
 	s.WriteString(fmt.Sprint(result.GetReservedAttempts())) // 获得producerBatch 每次尝试被发送的信息
+	s.WriteString(" content:")
+	s.WriteString(content) // 日志内容
 	return s.String()
 }
 
