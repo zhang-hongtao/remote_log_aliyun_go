@@ -46,7 +46,7 @@ func NewLogger(projectName, appName, logName string) *Logger {
 	if logName == "" {
 		panic(errors.New("logName cannot be empty"))
 	}
-	goPath := os.Getenv("GO_APP_LOG_PATH")
+	goPath := os.Getenv("ALIYUN_LOG_ERR_PATH")
 	if goPath != "" {
 		ErrorLogPath = fmt.Sprintf("%v/%v/%v/remote_logs", goPath, projectName, appName)
 
@@ -57,18 +57,18 @@ func NewLogger(projectName, appName, logName string) *Logger {
 	// 配置AccessKey、服务入口、Project名称、Logstore名称等相关信息。
 	// 日志服务的服务入口。更多信息，请参见服务入口。
 	// 此处以杭州为例，其它地域请根据实际情况填写。
-	endpoint := os.Getenv("GO_ALIYUAN_ENDPOINT")
+	endpoint := os.Getenv("ALIYUN_LOG_ENDPOINT")
 	if endpoint == "" {
-		panic(errors.New("invalid env GO_ALIYUAN_ENDPOINT"))
+		panic(errors.New("invalid env ALIYUN_LOG_ENDPOINT"))
 	}
 	// 阿里云访问密钥AccessKey。更多信息，请参见访问密钥。阿里云账号AccessKey拥有所有API的访问权限，风险很高。强烈建议您创建并使用RAM用户进行API访问或日常运维。
-	accessKeyId := os.Getenv("GO_ALIYUAN_ACCESSKEYID")
+	accessKeyId := os.Getenv("ALIYUN_LOG_ACCESS_KEY_ID")
 	if accessKeyId == "" {
-		panic(errors.New("invalid env GO_ALIYUAN_ACCESSKEYID"))
+		panic(errors.New("invalid env ALIYUN_LOG_ACCESS_KEY_ID"))
 	}
-	accessKeySecret := os.Getenv("GO_ALIYUAN_ACCESSKEYSECRET")
+	accessKeySecret := os.Getenv("ALIYUN_LOG_ACCESS_KEY_SECRET")
 	if accessKeySecret == "" {
-		panic(errors.New("invalid env GO_ALIYUAN_ACCESSKEYSECRET"))
+		panic(errors.New("invalid env ALIYUN_LOG_ACCESS_KEY_SECRET"))
 	}
 	// RAM用户角色的临时安全令牌。此处取值为空，表示不使用临时安全令牌。更多信息，请参见授权用户角色。
 	// securityToken = ""

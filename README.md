@@ -56,13 +56,13 @@ func main() {
 
 ## 注意
 
-1、需要环境变量`GO_APP_LOG_PATH`，上传失败的日志将保存在此目录下。
+1、需要环境变量`ALIYUN_LOG_ERR_PATH`，上传失败的日志将保存在此目录下。
 
-2、需要环境变量`GO_ALIYUAN_ENDPOINT`，阿里云Endpoint参数。
+2、需要环境变量`ALIYUN_LOG_ENDPOINT`，阿里云Endpoint参数。
 
-3、需要环境变量`GO_ALIYUAN_ACCESSKEYID`，阿里云访问密钥AccessKeyId。
+3、需要环境变量`ALIYUN_LOG_ACCESS_KEY_ID`，阿里云访问密钥AccessKeyId。
 
-4、需要环境变量`GO_ALIYUAN_ACCESSKEYSECRET`，阿里云访问密钥AccessKeySecret。
+4、需要环境变量`ALIYUN_LOG_ACCESS_KEY_SECRET`，阿里云访问密钥AccessKeySecret。
 
 5、程序在退出时需主动调用 `logger.Close()` 退出程序
 
